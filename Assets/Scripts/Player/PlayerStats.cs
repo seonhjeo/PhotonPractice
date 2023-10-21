@@ -3,6 +3,7 @@ using Fusion;
 using Player.Avatar;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Player
 {
@@ -13,13 +14,17 @@ namespace Player
         [Networked(OnChanged = nameof(UpdatePlayerName))] public NetworkString<_32> PlayerName { get; set; }
         
         [Networked(OnChanged = nameof(UpdateHat))] public int HatIndex { get; set; }
+        
+        [Networked(OnChanged = nameof(UpdateSpeakingIndicator))] public NetworkBool IsSpeaking { get; set; }
 
         [SerializeField] private TMP_Text playerNameLabel;
         [SerializeField] private Transform playerHead;
         
         private GameObject _currentHat = null;
-        
-        
+
+        public Image speakingIndicator;
+
+
         private void Start()
         {
             if (HasStateAuthority)
@@ -55,6 +60,21 @@ namespace Player
             newHat.GetComponent<Collider>().enabled = false;
             
             changed.Behaviour._currentHat = newHat;
+        }
+        
+        protected static void UpdateSpeakingIndicator(Changed<PlayerStats> changed)
+        {
+            bool isSpeaking = changed.Behaviour.IsSpeaking;
+            Image speakingIndicator = changed.Behaviour.speakingIndicator;
+            
+            if (isSpeaking)
+            {
+                speakingIndicator.enabled = true;
+            }
+            else
+            {
+                speakingIndicator.enabled = false;
+            }
         }
     }
 }

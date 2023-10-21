@@ -12,7 +12,7 @@ public class FusionConnection : MonoBehaviour, INetworkRunnerCallbacks
     
     public bool connectOnAwake;
     
-    [HideInInspector] public NetworkRunner networkRunner;
+    public NetworkRunner networkRunner;
 
     [SerializeField] private NetworkObject playerPrefab;
 
