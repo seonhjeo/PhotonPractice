@@ -8,22 +8,29 @@ using Fusion.Sockets;
 
 public class FusionConnection : MonoBehaviour, INetworkRunnerCallbacks
 {
+    public static FusionConnection instance;
+    
     public bool connectOnAwake;
     
-    [HideInInspector]
-    public NetworkRunner networkRunner;
+    [HideInInspector] public NetworkRunner networkRunner;
 
     [SerializeField] private NetworkObject playerPrefab;
 
+    private string _playerName;
     
 
     #region MonoBehaviour Methods
 
     private void Awake()
     {
+        if (instance == null)
+        {
+            instance = this;
+        }
+        
         if (connectOnAwake)
         {
-            ConnectToRunner();
+            ConnectToRunner("Anonymous");
         }
     }
 
@@ -32,8 +39,10 @@ public class FusionConnection : MonoBehaviour, INetworkRunnerCallbacks
 
     #region Network Methods
 
-    private async void ConnectToRunner()
+    public async void ConnectToRunner(string playerName)
     {
+        _playerName = playerName;
+        
         if (networkRunner == null)
         {
             networkRunner = gameObject.AddComponent<NetworkRunner>();
@@ -138,5 +147,13 @@ public class FusionConnection : MonoBehaviour, INetworkRunnerCallbacks
 
     #endregion
 
-    
+
+    #region Util Methods
+
+    public string GetPlayerName()
+    {
+        return _playerName;
+    }
+
+    #endregion
 }
