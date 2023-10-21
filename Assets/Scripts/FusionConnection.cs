@@ -13,7 +13,9 @@ public class FusionConnection : MonoBehaviour, INetworkRunnerCallbacks
     [HideInInspector]
     public NetworkRunner networkRunner;
 
+    [SerializeField] private NetworkObject playerPrefab;
 
+    
 
     #region MonoBehaviour Methods
 
@@ -80,6 +82,8 @@ public class FusionConnection : MonoBehaviour, INetworkRunnerCallbacks
     public void OnConnectedToServer(NetworkRunner runner)
     {
         Debug.Log("On Connected To Server");
+        NetworkObject playerObject = runner.Spawn(playerPrefab, Vector3.zero);
+        runner.SetPlayerObject(runner.LocalPlayer, playerObject);
     }
 
     public void OnDisconnectedFromServer(NetworkRunner runner)
