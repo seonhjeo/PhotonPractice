@@ -29,7 +29,7 @@ public class NameEntry : MonoBehaviour
     
     private void SubmitName()
     {
-        FusionConnection.instance.ConnectToRunner(nameInputField.text);
+        FusionConnection.Instance.ConnectToRunner(nameInputField.text);
         canvas.SetActive(false);
     }
 

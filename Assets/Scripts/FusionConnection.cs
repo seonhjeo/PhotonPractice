@@ -8,7 +8,7 @@ using Fusion.Sockets;
 
 public class FusionConnection : MonoBehaviour, INetworkRunnerCallbacks
 {
-    public static FusionConnection instance;
+    public static FusionConnection Instance;
     
     public bool connectOnAwake;
     
@@ -23,9 +23,9 @@ public class FusionConnection : MonoBehaviour, INetworkRunnerCallbacks
 
     private void Awake()
     {
-        if (instance == null)
+        if (Instance == null)
         {
-            instance = this;
+            Instance = this;
         }
         
         if (connectOnAwake)
