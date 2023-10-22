@@ -39,6 +39,7 @@ namespace Player
 
         protected static void UpdatePlayerName(Changed<PlayerStats> changed)
         {
+            changed.Behaviour.transform.root.gameObject.name = changed.Behaviour.PlayerName.ToString();
             changed.Behaviour.playerNameLabel.text = changed.Behaviour.PlayerName.ToString();
         }
 
