@@ -8,6 +8,7 @@ namespace UIElements
     public class SessionEntryPrefab : MonoBehaviour
     {
         public TMP_Text sessionName;
+        public string sessionKey;
         public TMP_Text playerCount;
         public Button joinButton;
 
@@ -31,7 +32,7 @@ namespace UIElements
 
         private void JoinSession()
         {
-            FusionConnection.Instance.ConnectToSession(sessionName.text);
+            FusionConnection.Instance.ConnectToSession(sessionName.text, sessionKey);
         }
     }
 }
