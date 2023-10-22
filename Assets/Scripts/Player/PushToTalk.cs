@@ -1,5 +1,4 @@
 
-using System;
 using Photon.Voice.Unity;
 using UnityEngine;
 using UnityEngine.InputSystem;

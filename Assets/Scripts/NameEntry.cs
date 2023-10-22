@@ -1,6 +1,4 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
+
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -29,7 +27,7 @@ public class NameEntry : MonoBehaviour
     
     private void SubmitName()
     {
-        FusionConnection.Instance.ConnectToRunner(nameInputField.text);
+        FusionConnection.Instance.ConnectToLobby(nameInputField.text);
         canvas.SetActive(false);
     }
 

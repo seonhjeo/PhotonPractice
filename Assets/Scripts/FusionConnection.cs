@@ -4,20 +4,33 @@ using System.Collections.Generic;
 using UnityEngine;
 using Fusion;
 using Fusion.Sockets;
+using UIElements;
+using UnityEngine.UI;
+using Random = UnityEngine.Random;
 
 
 public class FusionConnection : MonoBehaviour, INetworkRunnerCallbacks
 {
     public static FusionConnection Instance;
     
+    [Header("Runner")]
     public bool connectOnAwake;
-    
     public NetworkRunner networkRunner;
 
+    [Header("Player Prefab")]
     [SerializeField] private NetworkObject playerPrefab;
 
-    private string _playerName;
+    [Header("Sessions")]
+    public GameObject sessionListCanvas;
+    public Button refreshButton;
+    public Transform sessionListContent;
+    public GameObject sessionEntryPrefab;
+
     
+    
+    private string _playerName;
+    private List<SessionInfo> _session = new();
+
 
     #region MonoBehaviour Methods
 
@@ -30,7 +43,7 @@ public class FusionConnection : MonoBehaviour, INetworkRunnerCallbacks
         
         if (connectOnAwake)
         {
-            ConnectToRunner("Anonymous");
+            ConnectToSession();
         }
     }
 
@@ -39,9 +52,23 @@ public class FusionConnection : MonoBehaviour, INetworkRunnerCallbacks
 
     #region Network Methods
 
-    public async void ConnectToRunner(string playerName)
+
+    public void ConnectToLobby(string playerName)
     {
+        sessionListCanvas.SetActive(true);
         _playerName = playerName;
+        
+        if (networkRunner == null)
+        {
+            networkRunner = gameObject.AddComponent<NetworkRunner>();
+        }
+
+        networkRunner.JoinSessionLobby(SessionLobby.Shared);
+    }
+    
+    public async void ConnectToSession(string sessionName)
+    {
+        sessionListCanvas.SetActive(false);
         
         if (networkRunner == null)
         {
@@ -51,11 +78,47 @@ public class FusionConnection : MonoBehaviour, INetworkRunnerCallbacks
         await networkRunner.StartGame(new StartGameArgs()
         {
             GameMode = GameMode.Shared,
-            SessionName = "test",
+            SessionName = sessionName,
             Scene = 0,
             PlayerCount = 2,
             SceneManager = gameObject.AddComponent<NetworkSceneManagerDefault>()
         });
+    }
+    
+    public void ConnectToSession()
+    {
+        int randomInt = Random.Range(1000, 9999);
+        string sessionName = "room-" + randomInt;
+
+        ConnectToSession(sessionName);
+    }
+
+    public void RefreshSessionListUI()
+    {
+        foreach (Transform child in sessionListContent)
+        {
+            Destroy(child.gameObject);
+        }
+
+        foreach (SessionInfo session in _session)
+        {
+            if (session.IsVisible)
+            {
+                GameObject entry = Instantiate(sessionEntryPrefab.gameObject, sessionListContent);
+                SessionEntryPrefab script = entry.GetComponent<SessionEntryPrefab>();
+                script.sessionName.text = session.Name;
+                script.playerCount.text = session.PlayerCount + " / " + session.MaxPlayers;
+
+                if (session.IsOpen == false || session.PlayerCount >= session.MaxPlayers)
+                {
+                    script.joinButton.interactable = false;
+                }
+                else
+                {
+                    script.joinButton.interactable = true;
+                }
+            }
+        }
     }
 
     #endregion
@@ -118,6 +181,8 @@ public class FusionConnection : MonoBehaviour, INetworkRunnerCallbacks
     public void OnSessionListUpdated(NetworkRunner runner, List<SessionInfo> sessionList)
     {
         Debug.Log("On Session List Updated");
+        _session.Clear();
+        _session = sessionList;
     }
 
     public void OnCustomAuthenticationResponse(NetworkRunner runner, Dictionary<string, object> data)
