@@ -4,14 +4,16 @@ using System.Collections.Generic;
 using UnityEngine;
 using Fusion;
 using Fusion.Sockets;
+using TMPro;
 using UIElements;
 using UnityEngine.UI;
-using Random = UnityEngine.Random;
 
 
 public class FusionConnection : MonoBehaviour, INetworkRunnerCallbacks
 {
     public static FusionConnection Instance;
+    
+    private string _playerName;
     
     [Header("Runner")]
     public bool connectOnAwake;
@@ -20,17 +22,28 @@ public class FusionConnection : MonoBehaviour, INetworkRunnerCallbacks
     [Header("Player Prefab")]
     [SerializeField] private NetworkObject playerPrefab;
 
-    [Header("Sessions")]
+    [Header("Session Creation")]
+    public GameObject createSessionCanvas;
+    public TMP_InputField sessionNameInput;
+    public TMP_InputField passcodeInput;
+
+    [Header("Session Join")]
+    public GameObject joinSessionCanvas;
+    public TMP_InputField joinPasscodeInput;
+    public GameObject invalidText;
+    
+    [Header("Session List")]
     public GameObject sessionListCanvas;
     public Button refreshButton;
     public Transform sessionListContent;
     public GameObject sessionEntryPrefab;
-
     
     
-    private string _playerName;
+    private string _currentAttemptSessionCode;
+    private string _currentAttemptSessionName;
+    private bool _firstLobby = false;
+    
     private List<SessionInfo> _session = new();
-
 
     #region MonoBehaviour Methods
 
@@ -66,9 +79,53 @@ public class FusionConnection : MonoBehaviour, INetworkRunnerCallbacks
         networkRunner.JoinSessionLobby(SessionLobby.Shared);
     }
     
-    public async void ConnectToSession(string sessionName)
+    public void ConnectToSession(string sessionName, string sessionCode)
     {
+        _currentAttemptSessionName = sessionName;
+        _currentAttemptSessionCode = sessionCode;
+        
+        joinSessionCanvas.SetActive(true);
+    }
+
+    public async void FinishConnectingToSession()
+    {
+        if (_currentAttemptSessionCode == joinPasscodeInput.text)
+        {
+            sessionListCanvas.SetActive(false);
+            createSessionCanvas.SetActive(false);
+            joinSessionCanvas.SetActive(false);
+        
+            if (networkRunner == null)
+            {
+                networkRunner = gameObject.AddComponent<NetworkRunner>();
+            }
+
+            await networkRunner.StartGame(new StartGameArgs()
+            {
+                GameMode = GameMode.Shared,
+                SessionName = _currentAttemptSessionName,
+                SceneManager = gameObject.AddComponent<NetworkSceneManagerDefault>()
+            });
+        }
+        else
+        {
+            invalidText.SetActive(true);
+        }
+        
+        
+    }
+    
+    public async void ConnectToSession()
+    {
+        string sessionName = sessionNameInput.text;
+        string sessionCode = passcodeInput.text;
+
+        SessionProperty code = sessionCode;
+        Dictionary<string, SessionProperty> sessionProperties = new Dictionary<string, SessionProperty>();
+        sessionProperties.Add("sessionCode", code);
+
         sessionListCanvas.SetActive(false);
+        createSessionCanvas.SetActive(false);
         
         if (networkRunner == null)
         {
@@ -79,18 +136,10 @@ public class FusionConnection : MonoBehaviour, INetworkRunnerCallbacks
         {
             GameMode = GameMode.Shared,
             SessionName = sessionName,
-            Scene = 0,
+            SessionProperties = sessionProperties,
             PlayerCount = 2,
             SceneManager = gameObject.AddComponent<NetworkSceneManagerDefault>()
         });
-    }
-    
-    public void ConnectToSession()
-    {
-        int randomInt = Random.Range(1000, 9999);
-        string sessionName = "room-" + randomInt;
-
-        ConnectToSession(sessionName);
     }
 
     public void RefreshSessionListUI()
@@ -108,6 +157,7 @@ public class FusionConnection : MonoBehaviour, INetworkRunnerCallbacks
                 SessionEntryPrefab script = entry.GetComponent<SessionEntryPrefab>();
                 script.sessionName.text = session.Name;
                 script.playerCount.text = session.PlayerCount + " / " + session.MaxPlayers;
+                script.sessionKey = session.Properties.GetValueOrDefault("sessionCode").PropertyValue as string;
 
                 if (session.IsOpen == false || session.PlayerCount >= session.MaxPlayers)
                 {
@@ -183,6 +233,12 @@ public class FusionConnection : MonoBehaviour, INetworkRunnerCallbacks
         Debug.Log("On Session List Updated");
         _session.Clear();
         _session = sessionList;
+
+        if (_firstLobby == false)
+        {
+            RefreshSessionListUI();
+            _firstLobby = true;
+        }
     }
 
     public void OnCustomAuthenticationResponse(NetworkRunner runner, Dictionary<string, object> data)
